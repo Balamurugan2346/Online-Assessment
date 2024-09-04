@@ -1,5 +1,6 @@
 package com.android.lokal.ui.ViewModel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -12,7 +13,7 @@ import kotlinx.coroutines.launch
 class JobViewModel(private val repository: SearchJobRepository, private val dao: JobDao) : ViewModel() {
 
     var currentPage = 1
-    private val maxPages = 3
+    val maxPages = 3
 
     private val _isLoading = MutableLiveData(false)
     val isLoading : LiveData<Boolean> = _isLoading
@@ -30,29 +31,62 @@ class JobViewModel(private val repository: SearchJobRepository, private val dao:
         _isLoading.value = value
     }
 
-    fun fetchJobs(page: Int) {
-        if (currentPage > maxPages) {
-            return
-        }
 
-        viewModelScope.launch {
+
+
+//    fun fetchJobs(page: Int) {
+//        if (currentPage > maxPages) {
+//            return
+//        }
+//
+//        viewModelScope.launch {
+//            when (val result = repository.getAllJobs(page)) {
+//                is SearchJobRepository.Result.Success -> {
+//                    val filteredJobs = result.jobs.filter { it.type != 1040 }
+//
+//                    val currentJobs = _jobsLiveData.value ?: arrayListOf()
+//                    currentJobs.addAll(filteredJobs)
+//                    _jobsLiveData.postValue(currentJobs)
+//                    if (filteredJobs.isNotEmpty()) {
+//                        currentPage++
+//                    }
+//                }
+//                is SearchJobRepository.Result.Error -> {
+//                    _errorLiveData.postValue(result.message)
+//                }
+//            }
+//        }
+//    }
+
+fun fetchJobs(page: Int) {
+    if (currentPage > maxPages) return
+
+    viewModelScope.launch {
+        try {
             when (val result = repository.getAllJobs(page)) {
                 is SearchJobRepository.Result.Success -> {
                     val filteredJobs = result.jobs.filter { it.type != 1040 }
-
                     val currentJobs = _jobsLiveData.value ?: arrayListOf()
                     currentJobs.addAll(filteredJobs)
                     _jobsLiveData.postValue(currentJobs)
+
                     if (filteredJobs.isNotEmpty()) {
+                        Log.d("gdgdgdgdgd","currentPage:${currentPage}")
                         currentPage++
+                        Log.d("gdgdgdgdgd"," incremented : ${currentPage}")
                     }
                 }
                 is SearchJobRepository.Result.Error -> {
                     _errorLiveData.postValue(result.message)
                 }
             }
+        } catch (e: Exception) {
+            _errorLiveData.postValue("An unexpected error occurred: ${e.message}")
+        } finally {
+            _isLoading.postValue(false)
         }
     }
+}
 
 
     fun saveLocalJob(jobListing: JobListing) {

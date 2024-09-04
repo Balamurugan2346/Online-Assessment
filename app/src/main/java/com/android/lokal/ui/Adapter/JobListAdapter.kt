@@ -124,14 +124,27 @@ class JobListAdapter(var jobList: ArrayList<JobListing>,val context: Context,val
         val cardBtn : LinearLayout = view.findViewById(R.id.goTodetailBtn)
     }
 
+//
+//    @SuppressLint("NotifyDataSetChanged")
+//    fun submitList(newList: List<JobListing>) {
+//        val uniqueList = newList.distinctBy { it.id }
+//        jobList.clear()
+//        jobList.addAll(uniqueList)
+//        notifyDataSetChanged()
+//    }
 
     @SuppressLint("NotifyDataSetChanged")
     fun submitList(newList: List<JobListing>) {
-        val uniqueList = newList.distinctBy { it.id }
-        jobList.clear()
-        jobList.addAll(uniqueList)
-        notifyDataSetChanged()
+        val currentSize = jobList.size
+        val uniqueNewItems = newList.distinctBy { it.id }.filter { newItem ->
+            jobList.none { it.id == newItem.id }
+        }
+        jobList.addAll(uniqueNewItems)
+        if (currentSize == 0) {
+            notifyDataSetChanged()
+        } else {
+            notifyItemRangeInserted(currentSize, uniqueNewItems.size)
+        }
     }
-
 
 }
